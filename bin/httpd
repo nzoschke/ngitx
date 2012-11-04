@@ -1,0 +1,31 @@
+#!/bin/bash
+PORT=${PORT:-5000}
+ROOT=$(cd $(dirname $0)/..; pwd)
+
+# TODO: unstow repo, configure hooks and http.receivepack=true and reply
+
+cat >/tmp/httpd.$$.conf <<EOF
+LoadModule alias_module       libexec/apache2/mod_alias.so
+LoadModule cgi_module         libexec/apache2/mod_cgi.so
+LoadModule env_module         libexec/apache2/mod_env.so
+LoadModule log_config_module  libexec/apache2/mod_log_config.so
+LoadModule logio_module       libexec/apache2/mod_logio.so
+
+CustomLog "/dev/stderr" combinedio
+ErrorLog  "/dev/stderr"
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+LogFormat "%h %l %u %t \"%r\" %>s %b" common
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+LogLevel debug
+
+LockFile  "/tmp/httpd.$$.lock"
+PidFile   "/tmp/httpd.$$.pid"
+
+SetEnv GIT_PROJECT_ROOT /tmp
+SetEnv GIT_HTTP_EXPORT_ALL
+ScriptAlias /git/ $ROOT/vendor/git/libexec/git-core/git-http-backend/
+
+Listen $PORT
+EOF
+
+/usr/sbin/httpd -D FOREGROUND -f /tmp/httpd.$$.conf

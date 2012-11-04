@@ -1,0 +1,37 @@
+PORT=${PORT:-5000}
+ROOT=$(cd $(dirname $0)/..; pwd)
+
+cat >/tmp/nginx.$$.conf <<EOF
+daemon off;
+worker_processes  1;
+error_log stderr;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    access_log /dev/stderr;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen       $PORT;
+        server_name  localhost;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+
+        location ~ /git(/.*) {
+          proxy_buffering   off;
+          proxy_pass        http://localhost:5100;
+        }
+    }
+}
+EOF
+
+vendor/nginx/sbin/nginx -c /tmp/nginx.$$.conf
