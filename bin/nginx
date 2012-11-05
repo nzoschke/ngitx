@@ -17,6 +17,15 @@ http {
   sendfile on;
   keepalive_timeout 65;
 
+  upstream git-http-backends {
+    consistent_hash \$1;
+    server 127.0.0.1:5100;
+    server 127.0.0.1:5200;
+    server 127.0.0.1:5300;
+    server 127.0.0.1:5400;
+    server 127.0.0.1:5500;
+  }
+
   server {
     listen $PORT;
     resolver 8.8.8.8;
@@ -27,6 +36,11 @@ http {
       content_by_lua '
           ngx.say("<p>hello, world</p>")
       ';
+    }
+
+    location ~ ^/([a-z0-9_-]+.git)(/.*)$ {
+      proxy_buffering off;
+      proxy_pass http://git-http-backends;
     }
 
     location ~ /git(/.*) {
