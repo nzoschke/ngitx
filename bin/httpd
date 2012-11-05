@@ -23,7 +23,7 @@ PidFile   "/tmp/httpd.$$.pid"
 
 SetEnv GIT_PROJECT_ROOT /tmp
 SetEnv GIT_HTTP_EXPORT_ALL
-ScriptAlias /git/ $ROOT/vendor/git/libexec/git-core/git-http-backend/
+ScriptAlias / $ROOT/vendor/git/libexec/git-core/git-http-backend/
 
 Listen $PORT
 EOF
