@@ -3,36 +3,54 @@ ROOT=$(cd $(dirname $0)/..; pwd)
 
 cat >/tmp/nginx.$$.conf <<EOF
 daemon off;
-worker_processes  1;
 error_log stderr;
+worker_processes 1;
 
 events {
-    worker_connections  1024;
+  worker_connections 1024;
 }
 
 http {
-    access_log /dev/stderr;
-    default_type  application/octet-stream;
+  access_log /dev/stderr;
+  default_type  application/octet-stream;
 
-    sendfile        on;
-    keepalive_timeout  65;
+  sendfile on;
+  keepalive_timeout 65;
 
-    server {
-        listen       $PORT;
-        server_name  localhost;
+  server {
+    listen $PORT;
+    resolver 8.8.8.8;
+    server_name localhost;
 
-        location / {
-          default_type text/html;
-          content_by_lua '
-              ngx.say("<p>hello, world</p>")
-          ';
-        }
-
-        location ~ /git(/.*) {
-          proxy_buffering   off;
-          proxy_pass        http://localhost:5100;
-        }
+    location / {
+      default_type text/html;
+      content_by_lua '
+          ngx.say("<p>hello, world</p>")
+      ';
     }
+
+    location ~ /git(/.*) {
+      set_by_lua \$port '
+        local function StringHash(text)
+          local counter = 1
+          local len = string.len(text)
+          for i = 1, len, 3 do 
+            counter = math.fmod(counter*8161, 4294967279) +  -- 2^32 - 17: Prime!
+              (string.byte(text,i)*16776193) +
+              ((string.byte(text,i+1) or (len-i+256))*8372226) +
+              ((string.byte(text,i+2) or (len-i+256))*3932164)
+          end
+          return math.fmod(counter, 4294967291) -- 2^32 - 5: Prime (and different from the prime in the loop)
+        end
+
+        local m = ngx.re.match(ngx.var.request_uri, "([a-z0-9_-]+).git")
+        return(5100 + StringHash(m[1]) % 5 * 100) -- 5100, 5200, 5300, 5400, or 5500
+      ';
+
+      proxy_buffering off;
+      proxy_pass http://127.0.0.1:\$port;
+    }
+  }
 }
 EOF
 
