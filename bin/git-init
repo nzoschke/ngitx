@@ -1,0 +1,18 @@
+#!/bin/bash
+
+export GIT_DIR=$1
+
+git init --bare $1
+git config http.receivepack true
+
+cat >$1/hooks/pre-receive <<EOF
+#!/bin/bash
+
+printf "wait"
+for i in {1..30}; do printf "."; sleep 1; done
+printf "\n"
+
+exit 1
+EOF
+
+chmod +x $1/hooks/pre-receive
