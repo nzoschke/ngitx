@@ -1,11 +1,16 @@
 # ngitx
 
-Experiments with Apache and CGI git-http-backend behind an nginx consistent 
-hashing load balancing proxy.
+Experiments with Apache and CGI git-http-backend behind an nginx load balancing 
+proxy.
 
-Nginx is built via ngx_openresty, where the lua-nginx-module opens up very
-flexible methods of proxying to a specific Apache backend. See the 
-`location ~ ^/lua` section of bin/nginx for one experiment.
+The simplest nginx config uses the ngx_http_consistent_hash module to select a
+backend.
+
+A more powerful nginx config uses the lua-nginx-module to program arbitrarily
+complex methods of selecting a backend. See the `location ~ ^/lua` section of 
+bin/nginx for one experiment. With ngx.location.capture or lua-resty-redis,
+backends can be selected by asking a remote resource, all in a non-blocking 
+manner.
 
 ## Darwin Quickstart
 
