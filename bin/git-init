@@ -8,10 +8,13 @@ git config http.receivepack true
 cat >$1/hooks/pre-receive <<EOF
 #!/bin/bash
 
-printf "wait"
-for i in {1..30}; do printf "."; sleep 1; done
+printf "Simulating build"
+for i in {1..5}; do printf "."; sleep 1; done
 printf "\n"
 
+(( $RANDOM%2 )) && exit 0
+
+echo "Randomly failing. Try again."
 exit 1
 EOF
 
