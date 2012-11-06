@@ -9,7 +9,7 @@ backend.
 A more powerful nginx config uses the lua-nginx-module to program arbitrarily
 complex methods of selecting a backend. See the `location ~ ^/lua` section of 
 bin/nginx for one experiment. With ngx.location.capture or lua-resty-redis,
-backends can be selected by asking a remote resource, all in a non-blocking 
+backends can be selected by querying a remote resource, all in a non-blocking 
 manner.
 
 ## Darwin Quickstart
