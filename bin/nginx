@@ -43,7 +43,8 @@ http {
       proxy_pass http://git-http-backends;
     }
 
-    location ~ /git(/.*) {
+    location ~ ^/lua/([a-z0-9_-]+.git)(/.*)$ {
+      # consistent hash foo.git to an port
       set_by_lua \$port '
         local function StringHash(text)
           local counter = 1
@@ -57,9 +58,12 @@ http {
           return math.fmod(counter, 4294967291) -- 2^32 - 5: Prime (and different from the prime in the loop)
         end
 
-        local m = ngx.re.match(ngx.var.request_uri, "([a-z0-9_-]+).git")
-        return(5100 + StringHash(m[1]) % 5 * 100) -- 5100, 5200, 5300, 5400, or 5500
+        ports = {5100, 5200, 5300, 5400, 5500}
+        return(ports[StringHash(ngx.var[1]) % 5])
       ';
+
+      # remove /lua from uri before proxying
+      rewrite_by_lua 'ngx.req.set_uri("/" .. ngx.var[1] .. ngx.var[2], false)';
 
       proxy_buffering off;
       proxy_pass http://127.0.0.1:\$port;
