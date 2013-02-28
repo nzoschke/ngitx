@@ -1,0 +1,19 @@
+#!/bin/bash
+set -x
+BUILD_DIR=$(pwd)
+
+mkdir -p $BUILD_DIR/src
+curl -s http://apache.mirrors.pair.com/httpd/httpd-2.2.24.tar.gz | tar xz -C $BUILD_DIR/src
+curl -s http://git-core.googlecode.com/files/git-1.8.1.4.tar.gz  | tar xz -C $BUILD_DIR/src
+
+cd $BUILD_DIR/src/git-1.8.1.4
+./configure --prefix=/app/vendor/git --without-tcltk
+make -i -k
+DESTDIR=$BUILD_DIR make -i install
+
+cd $BUILD_DIR/src/httpd-2.2.24
+./configure --prefix=/app/vendor/httpd
+make
+DESTDIR=$BUILD_DIR make install
+
+rm -rf $BUILD_DIR/src
